@@ -1,2 +1,2 @@
 # data-postgres
-infra.go postgres data driver.
+infra.Go postgres data driver.
