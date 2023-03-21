@@ -2,6 +2,7 @@ package data_postgres
 
 import (
 	"github.com/infrago/data"
+	"github.com/infrago/infra"
 	_ "github.com/lib/pq" //此包自动注册名为postgres的sql驱动
 )
 
@@ -21,6 +22,6 @@ func Driver() data.Driver {
 func init() {
 	driver := Driver()
 	for _, key := range DRIVERS {
-		data.Register(key, driver)
+		infra.Register(key, driver)
 	}
 }
