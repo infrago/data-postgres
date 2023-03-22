@@ -227,9 +227,9 @@ func (base *PostgresBase) Break(key string) {
 	}
 
 	serial := "serial"
-	if base.connect.config.Serial != "" {
-		serial = base.connect.config.Serial
-	} else if vv, ok := base.connect.config.Setting["serial"].(string); ok && vv != "" {
+	if base.connect.instance.Config.Serial != "" {
+		serial = base.connect.instance.Config.Serial
+	} else if vv, ok := base.connect.instance.Config.Setting["serial"].(string); ok && vv != "" {
 		serial = vv
 	}
 

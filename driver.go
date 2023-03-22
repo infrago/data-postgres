@@ -26,19 +26,22 @@ type (
 )
 
 // 驱动连接
-func (drv *PostgresDriver) Connect(name string, config data.Config) (data.Connect, error) {
+func (drv *PostgresDriver) Connect(inst *data.Instance) (data.Connect, error) {
+
+	setting := PostgresSetting{
+		Schema: "public",
+	}
 
 	//支持自定义的schema，相当于数据库名
 
 	for _, s := range SCHEMAS {
-		if strings.HasPrefix(config.Url, s) {
-			config.Url = strings.Replace(config.Url, s, "postgres://", 1)
+		if strings.HasPrefix(inst.Config.Url, s) {
+			inst.Config.Url = strings.Replace(inst.Config.Url, s, "postgres://", 1)
 		}
 	}
 
-	schema := "public"
-	if vv, ok := config.Setting["schema"].(string); ok && vv != "" {
-		schema = vv
+	if vv, ok := inst.Setting["schema"].(string); ok && vv != "" {
+		setting.Schema = vv
 	}
 
 	// if config.Url != "" {
@@ -53,6 +56,6 @@ func (drv *PostgresDriver) Connect(name string, config data.Config) (data.Connec
 	// }
 
 	return &PostgresConnect{
-		name: name, config: config, schema: schema, db: nil, actives: int64(0),
+		instance: inst, setting: setting,
 	}, nil
 }
