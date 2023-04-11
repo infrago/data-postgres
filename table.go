@@ -104,8 +104,8 @@ func (table *PostgresTable) Change(item Map, dddd Map) Map {
 	//需要预处理一下
 	newValue := table.base.packing(value)
 
-	if inc, ok := dddd[data.INC]; ok {
-		newValue[data.INC] = inc
+	if inc, ok := dddd[INC]; ok {
+		newValue[INC] = inc
 	}
 
 	//先拿字段列表
@@ -115,7 +115,7 @@ func (table *PostgresTable) Change(item Map, dddd Map) Map {
 		//主值不在修改之中
 		if k == table.key {
 			continue
-		} else if k == data.INC {
+		} else if k == INC {
 			if vm, ok := v.(Map); ok {
 				for kk, vv := range vm {
 					dots := strings.Split(kk, ".")
@@ -426,8 +426,8 @@ func (table *PostgresTable) Update(update Map, args ...Any) int64 {
 	//需要预处理一下
 	newValue := table.base.packing(value)
 
-	if inc, ok := update[data.INC]; ok {
-		newValue[data.INC] = inc
+	if inc, ok := update[INC]; ok {
+		newValue[INC] = inc
 	}
 
 	//先拿字段列表
@@ -437,7 +437,7 @@ func (table *PostgresTable) Update(update Map, args ...Any) int64 {
 		//主值不在修改之中
 		if k == table.key {
 			continue
-		} else if k == data.INC {
+		} else if k == INC {
 			if vm, ok := v.(Map); ok {
 				for kk, vv := range vm {
 					dots := strings.Split(kk, ".")

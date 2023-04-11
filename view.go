@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	. "github.com/infrago/base"
-	"github.com/infrago/data"
 	"github.com/infrago/infra"
 )
 
@@ -327,7 +326,7 @@ func (view *PostgresView) Limit(offset, limit Any, args ...Any) (int64, []Map) {
 func (view *PostgresView) Group(field string, args ...Any) []Map {
 	view.base.lastError = nil
 
-	method := data.COUNT
+	method := COUNT
 	count := field
 	countField := "$count"
 	if len(args) >= 3 {
