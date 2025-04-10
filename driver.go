@@ -32,8 +32,11 @@ func (drv *PostgresDriver) Connect(inst *data.Instance) (data.Connect, error) {
 		Schema: "public",
 	}
 
-	//支持自定义的schema，相当于数据库名
+	if inst.Config.Schema != "" {
+		setting.Schema = inst.Config.Schema
+	}
 
+	//支持自定义的schema，相当于数据库名
 	for _, s := range SCHEMAS {
 		if strings.HasPrefix(inst.Config.Url, s) {
 			inst.Config.Url = strings.Replace(inst.Config.Url, s, "postgres://", 1)
@@ -43,17 +46,6 @@ func (drv *PostgresDriver) Connect(inst *data.Instance) (data.Connect, error) {
 	if vv, ok := inst.Setting["schema"].(string); ok && vv != "" {
 		setting.Schema = vv
 	}
-
-	// if config.Url != "" {
-	// 	durl,err := url.Parse(config.Url)
-	// 	if err == nil {
-	// 		if len(durl.Path) >= 1 {
-	// 			schema = durl.Path[1:]
-	// 		}
-	// 	}
-	// } else if vv,ok := config.Setting["schema"].(string); ok && vv != "" {
-	// 	schema = vv
-	// }
 
 	return &PostgresConnect{
 		instance: inst, setting: setting,
