@@ -73,7 +73,7 @@ func (table *PostgresTable) Create(dddd Map) Map {
 	value[table.key] = id
 
 	//触发器
-	table.base.trigger(data.CreateTrigger, Map{"base": table.base.name, "table": table.name, "entity": value})
+	table.base.trigger(data.CreateTrigger, Map{"base": table.base.name, "table": table.name, "entity": value, table.key: value[table.key]})
 
 	return value
 }
@@ -180,7 +180,7 @@ func (table *PostgresTable) Change(item Map, dddd Map) Map {
 		newItem[k] = v
 	}
 
-	table.base.trigger(data.ChangeTrigger, Map{"base": table.base.name, "table": table.name, "entity": newItem, "before": item, "after": newItem})
+	table.base.trigger(data.ChangeTrigger, Map{"base": table.base.name, "table": table.name, table.key: newItem[table.key], "entity": newItem, "before": item, "after": newItem})
 
 	return newItem
 }
@@ -354,7 +354,7 @@ func (table *PostgresTable) Remove(args ...Any) Map {
 	//触发器
 
 	//注意这里，如果手动提交事务， 那这里直接返回，是不需要提交的
-	table.base.trigger(data.RemoveTrigger, Map{"base": table.base.name, "table": table.name, "entity": item})
+	table.base.trigger(data.RemoveTrigger, Map{"base": table.base.name, "table": table.name, "entity": item, table.key: item[table.key]})
 
 	return item
 }
