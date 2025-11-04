@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	. "github.com/infrago/base"
+	"github.com/infrago/data"
 	"github.com/infrago/infra"
 )
 
@@ -233,6 +234,91 @@ func (view *PostgresView) Query(args ...Any) []Map {
 	}
 
 	return items
+}
+
+func (view *PostgresView) Range(next data.RangeFunc, args ...Any) Res {
+	return view.LimitRange(0, next, args...)
+}
+
+// Range 遍历数据
+func (view *PostgresView) LimitRange(limit int64, next data.RangeFunc, args ...Any) Res {
+	if next == nil {
+		return infra.Fail
+	}
+	if limit < 0 {
+		return infra.Fail
+	}
+
+	view.base.lastError = nil
+
+	//生成查询条件
+	where, builds, orderby, err := view.base.parsing(1, args...)
+	if err != nil {
+		view.base.errorHandler("data.range.parse", err, view.name)
+		return infra.Fail
+	}
+
+	exec, err := view.base.beginExec()
+	if err != nil {
+		view.base.errorHandler("data.range.begin", err, view.name)
+		return infra.Fail
+	}
+
+	sql := fmt.Sprintf(`SELECT * FROM "%s"."%s" WHERE %s %s`, view.schema, view.view, where, orderby)
+	rows, err := exec.Query(sql, builds...)
+	if err != nil {
+		view.base.errorHandler("data.range.query", err, view.name, sql, builds)
+		return infra.Fail
+	}
+	defer rows.Close()
+
+	cols, err := rows.Columns()
+	if err != nil {
+		view.base.errorHandler("data.range.columns", err, view.name, cols)
+		return infra.Fail
+	}
+
+	//遍历结果
+	// items := []Map{}
+	for rows.Next() {
+		//扫描数据
+		values := make([]interface{}, len(cols))  //真正的值
+		pValues := make([]interface{}, len(cols)) //指针，指向值
+		for i := range values {
+			pValues[i] = &values[i]
+		}
+		err = rows.Scan(pValues...)
+
+		if err != nil {
+			view.base.errorHandler("data.range.scan", err, view.name)
+			return infra.Fail
+		}
+
+		//这里应该有个打包
+		m := view.base.unpacking(cols, values)
+
+		//返回前使用编码生成
+		//有必要的, 按模型拿到数据
+		item := Map{}
+		//直接使用err=会有问题，总是不为nil，解析就失败
+		errm := infra.Mapping(view.fields, m, item, false, true)
+		if errm.Fail() {
+			view.base.errorHandler("data.range.mapping", errm, view.name)
+			return infra.Fail
+		} else {
+			if res := next(item); res.Fail() {
+				return res
+			}
+			if limit > 0 {
+				limit--
+				if limit <= 0 {
+					break
+				}
+			}
+		}
+	}
+
+	return infra.OK
 }
 
 // 分页查询
