@@ -2,12 +2,14 @@ package data_postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
 
+	. "github.com/infrago/base"
 	"github.com/infrago/data"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type (
@@ -78,3 +80,58 @@ func (postgresDialect) Quote(s string) string {
 func (postgresDialect) Placeholder(n int) string { return fmt.Sprintf("$%d", n) }
 func (postgresDialect) SupportsILike() bool      { return true }
 func (postgresDialect) SupportsReturning() bool  { return true }
+func (postgresDialect) MaxParams() int           { return 65535 }
+func (postgresDialect) ClassifyError(err error) error {
+	var pqerr *pq.Error
+	if !errors.As(err, &pqerr) {
+		return nil
+	}
+	switch string(pqerr.Code) {
+	case "23505":
+		return data.ErrDuplicate
+	case "23503":
+		return data.ErrForeignKey
+	case "40001", "40P01":
+		return data.ErrConflict
+	case "57014":
+		return data.ErrCanceled
+	default:
+		if strings.HasPrefix(string(pqerr.Code), "08") {
+			return data.ErrDriver
+		}
+		return nil
+	}
+}
+func (postgresDialect) BindValue(cfg Var, v any) (any, bool) {
+	switch {
+	case data.IsArrayVar(cfg):
+		return pq.Array(v), true
+	case data.IsJSONVar(cfg):
+		return data.BindJSONValue(v)
+	case data.IsBinaryVar(cfg):
+		return data.BindBinaryValue(v)
+	case data.IsUUIDVar(cfg), data.IsDecimalVar(cfg):
+		return data.BindTextValue(v)
+	case data.IsTimeVar(cfg):
+		return data.BindTimeValue(v)
+	default:
+		return nil, false
+	}
+}
+func (postgresDialect) DecodeValue(cfg Var, value any) (any, bool) {
+	switch {
+	case data.IsArrayVar(cfg):
+		return data.DecodePGArrayValue(cfg, value)
+	case data.IsJSONVar(cfg):
+		return data.DecodeJSONValue(value)
+	case data.IsBinaryVar(cfg):
+		return data.DecodeBinaryValue(value)
+	case data.IsUUIDVar(cfg), data.IsDecimalVar(cfg):
+		return data.DecodeTextValue(value)
+	case data.IsTimeVar(cfg):
+		return data.DecodeTimeValue(value)
+	default:
+		return nil, false
+	}
+}
+func (postgresDialect) BindArray(v any) any { return pq.Array(v) }
