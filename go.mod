@@ -3,9 +3,9 @@ module github.com/infrago/data-postgres
 go 1.25.3
 
 require (
-	github.com/infrago/base v0.28.0
-	github.com/infrago/data v0.28.0
-	github.com/infrago/infra v0.28.0
+	github.com/infrago/base v0.29.0
+	github.com/infrago/data v0.29.0
+	github.com/infrago/infra v0.29.0
 	github.com/lib/pq v1.10.9
 )
 
